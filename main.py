@@ -1,36 +1,63 @@
-import psycopg2
 import DB as db
 
-conn = psycopg2.connect(
-    dbname="Clients-Server",
-    user="",
-    password="",
-    host="localhost",
-    port="5432"
-)
+
+def search_null(text):
+    string = input(text)
+    if string == '':
+        return None
+    else:
+        return string
 
 def main():
-    # создание таблиц
-    # db.create_tables(conn)
+    # Создание таблиц
+    db.create_tables()
 
-    # добавление клиента
-    client_id = db.add_client(conn, "John", "Doe", "johndoe@example.com")
+    while True:
+        command = input('Введите команду("помощь - список команд"):')
+        match command.lower():
+            case 'помощь':
+                print("""
+                "помощь" - список команд,
+                "добавить клиента" - добавить клиента,
+                "добавить номер телефона" - добавить телефон,
+                "изменить" - изменить контакт или номер телефона,
+                "удалить клиента" - удалить клиента,
+                "удалить номер телефона" - удалить номер телефона,
+                "поиск" - искать в базе,
+                "выход" - выход
+                """)
 
-    # добавление телефона для клиента
-    phone_id = db.add_phone(conn, client_id, "123456780")
+            case "добавить клиента":
+                client_id = db.add_client(search_null('Введите имя: '), search_null('Введите фамилию: '), search_null('Введите электронную почту: '))
+                print('ID нового клиента: ', client_id)
+            case "добавить телефон":
+                phone_number = db.add_phone(search_null('Введите ID пользователя: '), search_null('Введите номер телефона: '))
+                print(f'Телефонный номер {phone_number} добавлен')
+            case "изменить":
+                db.update_client(
+                    search_null('Введите ID пользователя: '),
+                    search_null('Введите новое имя(оставьте пустое поле, чтобы не изменять): '),
+                    search_null('Введите новую фамилию(оставьте пустое поле, чтобы не изменять): '),
+                    search_null('Введите новую эл. почту(оставьте пустое поле, чтобы не изменять): '),
+                    search_null('Введите новый номер телефона(оставьте пустое поле, чтобы не изменять): ')
+                )
+            case "удалить телефон":
+                db.delete_phone(search_null('Введите номер телефона, который требуется удалить: '))
+            case "удалить клиента":
+                db.delete_client(search_null('Введите ID клиента для удаления: '))
+            case "поиск":
+                data = {}
+                def find_null(row, text):
+                    return {row: text} if text else {}
 
-    # изменение данных клиента
-    # client_id = db.update_client(conn, client_id, "Jane", "Doe", "janedoe@example.com")
-
-    # удаление телефона для клиента
-    db.delete_phone(conn, phone_id)
-
-    # удаление клиента
-    db.delete_client(conn, client_id)
-
-    # поиск клиентов
-    search_results = db.find_client(conn, "Jane")
-    print(search_results)
+                data.update(find_null('first_name', search_null('Введите имя: ')))
+                data.update(find_null('last_name', search_null('Введите фамилию: ')))
+                data.update(find_null('email', search_null('Введите  эл. почту: ')))
+                data.update(find_null('phone_number', search_null('Введите  номер телефона: ')))
+                db.find_client(data)
+            case "выход":
+                print("Работа с БД завершена")
+                break
 
 
 if __name__ == '__main__':
